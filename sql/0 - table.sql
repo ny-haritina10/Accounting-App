@@ -7,7 +7,7 @@ CREATE TABLE users (
     id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     prefix VARCHAR(5) DEFAULT 'USR',     
     user_name VARCHAR(255) NOT NULL UNIQUE, -- identifiant
-    user_password VARCHAR(255) NOT NULL,    -- hashed password
+    user_password VARCHAR(255) NOT NULL,    -- hashed password using 
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP 
 ); 

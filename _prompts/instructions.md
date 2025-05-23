@@ -16,6 +16,37 @@ You will:
 - Avoid clever, advanced solutions unless requested
 - Use beginner- to intermediate-level Java (OOP, inheritance, abstraction, interfaces)
 
+
+### Code Implementation Specifications
+
+- Always refers to `api_response.md` docs and always use ApiResponse<T> from mg.module.accounting.api when creating API endpoint
+- Always use LocalDate and LocalDateTime to handle date 
+- Project Folder Structure: 
+  java.mg.module.accounting/
+  │
+  ├── api/
+  │   └── ApiResponse.java
+  │
+  ├── config/                  # Configuration files (e.g., security, database)
+  │
+  ├── controllers/             # All controllers
+  │   ├── sales/               # Controllers related to sales
+  │   └── stock/               # Controllers related to stock
+  │
+  ├── dto/                     # Data Transfer Objects (DTOs)
+  │
+  ├── models/                  # Entity classes (JPA Models)
+  
+  ├── utils/                  # Utility class 
+
+  │
+  ├── services/                # Service layer
+  │   ├── sales/               # Business logic for sales
+  │   └── stock/               # Business logic for stock
+  │
+  └── AccountingApplication.java  # Main Spring Boot application entry point
+  
+
 ### Env: 
 
 - Spring Boot
