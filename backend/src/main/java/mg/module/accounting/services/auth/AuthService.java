@@ -43,4 +43,12 @@ public class AuthService {
 
         return ApiResponse.success(loginResponse, "Login successful");
     }
+
+    public ApiResponse<String> logout(String token) {
+        if (!jwtUtil.validateToken(token)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid token", null);
+        }
+        
+        return ApiResponse.success(null, "Logout successful");
+    }
 }
