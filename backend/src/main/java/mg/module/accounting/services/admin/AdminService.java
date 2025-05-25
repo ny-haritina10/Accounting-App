@@ -4,11 +4,9 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 
 import mg.module.accounting.api.ApiResponse;
 import mg.module.accounting.dto.CreateUserRequest;
@@ -37,9 +35,8 @@ public class AdminService {
     private BCryptPasswordEncoder passwordEncoder;
 
     public ApiResponse<User> createUser(CreateUserRequest request) {
-        // check if username exists
         if (userRepository.findByUserName(request.getUserName()).isPresent()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Username already exists", null);
+            return ApiResponse.error("Username already exists", "USERNAME_EXISTS");
         }
 
         User user = new User();
@@ -53,18 +50,19 @@ public class AdminService {
     @Transactional
     public ApiResponse<String> assignRoles(RoleAssignmentRequest request) {
         User user = userRepository.findById(request.getUserId())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found", null));
+                .orElse(null);
+        if (user == null) {
+            return ApiResponse.error("User not found", "USER_NOT_FOUND");
+        }
 
-        // verify all roles exist
         for (Long roleId : request.getRoleIds()) {
             if (!roleRepository.existsById(roleId)) {
-                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Role ID " + roleId + " not found", null);
+                return ApiResponse.error("Role ID " + roleId + " not found", "ROLE_NOT_FOUND");
             }
         }
 
         userRoleRepository.deleteByIdUser(request.getUserId());
 
-        // assign new roles
         for (Long roleId : request.getRoleIds()) {
             UserRole userRole = new UserRole();
             userRole.setIdUser(user.getId());
@@ -76,9 +74,11 @@ public class AdminService {
     }
 
     public ApiResponse<List<UserRoleResponse>> getUserRoles(Long userId) {
-        // verify user exists
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found", null));
+                .orElse(null);
+        if (user == null) {
+            return ApiResponse.error("User not found", "USER_NOT_FOUND");
+        }
 
         List<UserRole> userRoles = userRoleRepository.findByIdUser(userId);
         List<UserRoleResponse> response = userRoles.stream().map(userRole -> {
@@ -88,7 +88,10 @@ public class AdminService {
             userRoleResponse.setUserName(user.getUserName());
             userRoleResponse.setRoleId(userRole.getIdRole());
             Role role = roleRepository.findById(userRole.getIdRole())
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Role not found", null));
+                    .orElse(null);
+            if (role == null) {
+                throw new RuntimeException("Role not found"); 
+            }
             userRoleResponse.setRoleLabel(role.getLabel());
             userRoleResponse.setAssignedAt(userRole.getAssignedAt());
             return userRoleResponse;
@@ -100,11 +103,17 @@ public class AdminService {
     @Transactional
     public ApiResponse<String> removeRole(Long userId, Long roleId) {
         if (!userRepository.existsById(userId)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found", null);
+            return ApiResponse.error("User not found", "USER_NOT_FOUND");
         }
 
         if (!roleRepository.existsById(roleId)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Role not found", null);
+            return ApiResponse.error("Role not found", "ROLE_NOT_FOUND");
+        }
+
+        List<UserRole> userRoles = userRoleRepository.findByIdUser(userId);
+        boolean hasRole = userRoles.stream().anyMatch(userRole -> userRole.getIdRole().equals(roleId));
+        if (!hasRole) {
+            return ApiResponse.error("User does not have this role", "ROLE_NOT_ASSIGNED");
         }
 
         userRoleRepository.deleteByIdUserAndIdRole(userId, roleId);
