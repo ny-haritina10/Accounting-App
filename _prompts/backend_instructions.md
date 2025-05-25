@@ -27,6 +27,8 @@ You will:
     - Clearly state which file needs to be updated.
     - Indicate exactly where the new code should be inserted or which part should be modified.
     - Provide only the relevant code snippet for the change.
+- Always return JSON ApiResponse with success=false for error cases instead of throwing ResponseStatusException or any other exception
+  - you can add logging in the terminal for debugging but always return JSON ApiResponse with success=false for error
 - Project Folder Structure: 
   java.mg.module.accounting/
   │

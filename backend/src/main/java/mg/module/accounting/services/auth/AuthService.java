@@ -1,10 +1,8 @@
 package mg.module.accounting.services.auth;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 
 import mg.module.accounting.api.ApiResponse;
 import mg.module.accounting.dto.LoginRequest;
@@ -28,13 +26,14 @@ public class AuthService {
     public ApiResponse<LoginResponse> login(LoginRequest loginRequest) {
         // find user by username
         User user = userRepository.findByUserName(loginRequest.getUserName())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, 
-                        "Invalid credentials", null));
+                .orElse(null);
+        if (user == null) {
+            return ApiResponse.error("Invalid credentials", "INVALID_CREDENTIALS");
+        }
 
         // verify password
         if (!passwordEncoder.matches(loginRequest.getUserPassword(), user.getUserPassword())) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, 
-                    "Invalid credentials", null);
+            return ApiResponse.error("Invalid credentials", "INVALID_CREDENTIALS");
         }
 
         // generate JWT token
@@ -46,9 +45,9 @@ public class AuthService {
 
     public ApiResponse<String> logout(String token) {
         if (!jwtUtil.validateToken(token)) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid token", null);
+            return ApiResponse.error("Invalid token", "INVALID_TOKEN");
         }
-        
+
         return ApiResponse.success(null, "Logout successful");
     }
 }
