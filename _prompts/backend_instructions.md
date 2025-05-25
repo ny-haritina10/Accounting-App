@@ -21,6 +21,12 @@ You will:
 
 - Always refers to `api_response.md` docs and always use ApiResponse<T> from mg.module.accounting.api when creating API endpoint
 - Always use LocalDate and LocalDateTime to handle date 
+- When I request a new functionality:
+  - If you create a new file, provide the full code of that file.
+  - If you're updating or adding code in an existing file, do not include the entire file. Instead:
+    - Clearly state which file needs to be updated.
+    - Indicate exactly where the new code should be inserted or which part should be modified.
+    - Provide only the relevant code snippet for the change.
 - Project Folder Structure: 
   java.mg.module.accounting/
   │
