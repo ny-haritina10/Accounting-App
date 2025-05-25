@@ -15,8 +15,8 @@ import org.springframework.web.bind.annotation.RestController;
 import mg.module.accounting.api.ApiResponse;
 import mg.module.accounting.dto.CreateUserRequest;
 import mg.module.accounting.dto.RoleAssignmentRequest;
+import mg.module.accounting.dto.UserRoleResponse;
 import mg.module.accounting.models.User;
-import mg.module.accounting.models.UserRole;
 import mg.module.accounting.services.admin.AdminService;
 
 @RestController
@@ -37,7 +37,7 @@ public class AdminController {
     }
 
     @GetMapping("/users/{userId}/roles")
-    public ResponseEntity<ApiResponse<List<UserRole>>> getUserRoles(@PathVariable Long userId) {
+    public ResponseEntity<ApiResponse<List<UserRoleResponse>>> getUserRoles(@PathVariable Long userId) {
         return ResponseEntity.ok(adminService.getUserRoles(userId));
     }
 
