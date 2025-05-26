@@ -36,3 +36,30 @@ CREATE TABLE user_roles (
     id_role BIGINT NOT NULL,
     assigned_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
+
+/* 26-05-2025 */
+
+--
+-- account types
+--
+CREATE TABLE account_types (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    prefix VARCHAR(5) DEFAULT 'ACT',
+    label VARCHAR(20) NOT NULL CHECK (label IN ('ASSET', 'LIABILITY', 'EQUITY', 'REVENUE', 'EXPENSE')),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+--
+-- chart of accounts
+--
+CREATE TABLE chart_of_accounts (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    prefix VARCHAR(5) DEFAULT 'COA',
+    account_code VARCHAR(10) NOT NULL,
+    account_name VARCHAR(255) NOT NULL,
+    id_account_type BIGINT NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_account_type FOREIGN KEY (id_account_type) REFERENCES account_types(id)
+);
