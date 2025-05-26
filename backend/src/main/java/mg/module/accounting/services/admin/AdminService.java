@@ -9,15 +9,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import mg.module.accounting.api.ApiResponse;
-import mg.module.accounting.dto.CreateUserRequest;
-import mg.module.accounting.dto.RoleAssignmentRequest;
-import mg.module.accounting.dto.UserRoleResponse;
 import mg.module.accounting.models.Role;
 import mg.module.accounting.models.User;
 import mg.module.accounting.models.UserRole;
 import mg.module.accounting.repositories.RoleRepository;
 import mg.module.accounting.repositories.UserRepository;
 import mg.module.accounting.repositories.UserRoleRepository;
+import mg.module.accounting.requests.CreateUserRequest;
+import mg.module.accounting.requests.RoleAssignmentRequest;
+import mg.module.accounting.responses.UserRoleResponse;
 
 @Service
 public class AdminService {

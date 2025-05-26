@@ -1,4 +1,4 @@
-package mg.module.accounting.dto;
+package mg.module.accounting.responses;
 
 public class LoginResponse {
     

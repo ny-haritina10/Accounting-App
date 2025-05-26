@@ -1,4 +1,4 @@
-package mg.module.accounting.dto;
+package mg.module.accounting.requests;
 
 import java.util.List;
 

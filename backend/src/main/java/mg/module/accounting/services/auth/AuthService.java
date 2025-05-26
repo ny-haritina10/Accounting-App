@@ -5,10 +5,10 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import mg.module.accounting.api.ApiResponse;
-import mg.module.accounting.dto.LoginRequest;
-import mg.module.accounting.dto.LoginResponse;
 import mg.module.accounting.models.User;
 import mg.module.accounting.repositories.UserRepository;
+import mg.module.accounting.requests.LoginRequest;
+import mg.module.accounting.responses.LoginResponse;
 import mg.module.accounting.utils.JwtUtil;
 
 @Service

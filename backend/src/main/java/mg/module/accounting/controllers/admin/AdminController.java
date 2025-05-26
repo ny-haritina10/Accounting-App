@@ -13,10 +13,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import mg.module.accounting.api.ApiResponse;
-import mg.module.accounting.dto.CreateUserRequest;
-import mg.module.accounting.dto.RoleAssignmentRequest;
-import mg.module.accounting.dto.UserRoleResponse;
 import mg.module.accounting.models.User;
+import mg.module.accounting.requests.CreateUserRequest;
+import mg.module.accounting.requests.RoleAssignmentRequest;
+import mg.module.accounting.responses.UserRoleResponse;
 import mg.module.accounting.services.admin.AdminService;
 
 @RestController

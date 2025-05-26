@@ -9,8 +9,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import mg.module.accounting.api.ApiResponse;
-import mg.module.accounting.dto.LoginRequest;
-import mg.module.accounting.dto.LoginResponse;
+import mg.module.accounting.requests.LoginRequest;
+import mg.module.accounting.responses.LoginResponse;
 import mg.module.accounting.services.auth.AuthService;
 
 @RestController
