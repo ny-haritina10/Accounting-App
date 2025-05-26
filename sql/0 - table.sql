@@ -63,3 +63,35 @@ CREATE TABLE chart_of_accounts (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_account_type FOREIGN KEY (id_account_type) REFERENCES account_types(id)
 );
+
+
+--
+-- JOURNAL ENTRIES
+--
+CREATE TABLE journal_entries (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    prefix VARCHAR(5) DEFAULT 'JRN',
+    entry_description VARCHAR(255) NOT NULL,
+    entry_status VARCHAR(20) NOT NULL CHECK (entry_status IN ('CREATED', 'VALIDATED', 'CANCELED', 'REVERSED')),
+    id_user BIGINT NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_user FOREIGN KEY (id_user) REFERENCES users(id)
+);
+
+--
+-- JOURNAL ENTRY LINES
+-- 
+CREATE TABLE journal_entry_lines (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    prefix VARCHAR(5) DEFAULT 'JEL',
+    id_journal_entry BIGINT NOT NULL,
+    id_account BIGINT NOT NULL,
+    debit DECIMAL(15, 2) DEFAULT 0.00,
+    credit DECIMAL(15, 2) DEFAULT 0.00,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_journal_entry FOREIGN KEY (id_journal_entry) REFERENCES journal_entries(id),
+    CONSTRAINT fk_account FOREIGN KEY (id_account) REFERENCES accounts(id),
+    CONSTRAINT chk_debit_credit CHECK (debit >= 0 AND credit >= 0 AND (debit > 0 OR credit > 0))
+);

@@ -54,7 +54,7 @@ This document outlines the core features of an accounting system and the busines
 - [ ] Require at least one debit and one credit  
 - [ ] Prevent submission if debit ≠ credit  
 - [ ] Track who posted the entry and when  
-- [ ] Entry status: Draft | Posted | Reversed
+- [ ] Entry status: Created | Validated | Canceled | Reversed
 
 ---
 
