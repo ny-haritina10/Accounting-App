@@ -56,6 +56,41 @@ This document outlines the core features of an accounting system and the busines
 - [ ] Track who posted the entry and when  
 - [ ] Entry status: Created | Validated | Canceled | Reversed
 
+1. Retrieve & Search Entries
+
+Implement GET endpoints to:
+    Retrieve a list of all journal entries
+    Retrieve a journal entry by ID
+    Search/filter journal entries by:
+        Date range
+        Status
+        User
+        Account involved
+
+2. Posting & Period Locking
+    Implement "posting" of journal entries — make them immutable after validation.
+    Add logic to lock accounting periods, disallowing new entries or edits to existing ones in closed periods.
+    Scenario: End of Month Accounting
+      Let's say your company has the following process:
+          Accountants create and edit journal entries during the month of April 2025.
+          On May 5, 2025, the financial controller reviews and closes April to finalize books.
+          After April is closed:
+              No new entries can be created for April.
+              Existing entries for April cannot be modified or deleted.
+              Only posted entries are used in reports (like balance sheet or income statement).
+
+3. Reversing Entries
+    Provide an endpoint to auto-generate reversing journal entries, useful for accruals and temporary adjustments.
+
+4. Journal Entry Numbering (Sequence)
+    Assign unique sequential journal entry numbers, optionally per period (e.g., 2025-0001).
+    Suggest a well formatted and coherent unique sequential entry numbers 
+
+5. Audit Trail
+    Record:
+        Who created/updated/reversed
+        Timestamps for each action
+  
 ---
 
 ## 📚 General Ledger

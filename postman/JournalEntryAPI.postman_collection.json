@@ -1,0 +1,98 @@
+{
+  "info": {
+    "name": "Journal Entry API Tests",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Get All Journal Entries",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "http://localhost:8080/api/journal-entries",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["api", "journal-entries"]
+        },
+        "description": "Retrieve a list of all journal entries."
+      },
+      "response": []
+    },
+    {
+      "name": "Get Journal Entry by ID",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "http://localhost:8080/api/journal-entries/1",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["api", "journal-entries", "1"]
+        },
+        "description": "Retrieve a journal entry by its ID. Replace '1' with the desired journal entry ID."
+      },
+      "response": []
+    },
+    {
+      "name": "Search Journal Entries",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "http://localhost:8080/api/journal-entries/search?startDate=2025-01-01&endDate=2025-12-31&status=CREATED&userId=1&accountId=100",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["api", "journal-entries", "search"],
+          "query": [
+            {
+              "key": "startDate",
+              "value": "2025-01-01",
+              "description": "Start date for filtering (YYYY-MM-DD)"
+            },
+            {
+              "key": "endDate",
+              "value": "2025-12-31",
+              "description": "End date for filtering (YYYY-MM-DD)"
+            },
+            {
+              "key": "status",
+              "value": "CREATED",
+              "description": "Status filter (e.g., CREATED, VALIDATED, CANCELED, REVERSED)"
+            },
+            {
+              "key": "userId",
+              "value": "1",
+              "description": "User ID filter"
+            },
+            {
+              "key": "accountId",
+              "value": "100",
+              "description": "Account ID filter"
+            }
+          ]
+        },
+        "description": "Search journal entries with optional filters. Modify query parameters as needed."
+      },
+      "response": []
+    }
+  ]
+}
