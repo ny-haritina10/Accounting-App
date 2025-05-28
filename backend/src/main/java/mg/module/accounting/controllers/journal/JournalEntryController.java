@@ -31,9 +31,16 @@ public class JournalEntryController {
         return ResponseEntity.ok(response);
     }
 
+    @PostMapping("/{id}/post")
+    public ResponseEntity<ApiResponse<JournalEntryDto>> postJournalEntry(@PathVariable Long id) {
+        ApiResponse<JournalEntryDto> response = journalEntryService.postJournalEntry(id);
+        return ResponseEntity.ok(response);
+    }
+
     @GetMapping
-    public ResponseEntity<ApiResponse<List<JournalEntryDto>>> getAllJournalEntries() {
-        ApiResponse<List<JournalEntryDto>> response = journalEntryService.getAllJournalEntries();
+    public ResponseEntity<ApiResponse<List<JournalEntryDto>>> getAllJournalEntries(
+            @RequestParam(defaultValue = "false") boolean postedOnly) {
+        ApiResponse<List<JournalEntryDto>> response = journalEntryService.getAllJournalEntries(postedOnly);
         return ResponseEntity.ok(response);
     }
 
@@ -49,8 +56,9 @@ public class JournalEntryController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) Long userId,
-            @RequestParam(required = false) Long accountId) {
-        ApiResponse<List<JournalEntryDto>> response = journalEntryService.searchJournalEntries(startDate, endDate, status, userId, accountId);
+            @RequestParam(required = false) Long accountId,
+            @RequestParam(defaultValue = "false") boolean postedOnly) {
+        ApiResponse<List<JournalEntryDto>> response = journalEntryService.searchJournalEntries(startDate, endDate, status, userId, accountId, postedOnly);
         return ResponseEntity.ok(response);
     }
 }

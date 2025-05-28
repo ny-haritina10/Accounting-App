@@ -15,32 +15,33 @@ import jakarta.persistence.Table;
 @Entity
 @Table(name = "journal_entries")
 public class JournalEntry {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "prefix", nullable = false, length = 5)
+    @Column(length = 5)
     private String prefix = "JRN";
 
-    @Column(name = "description", nullable = false)
     private String description;
 
-    @Column(name = "status", nullable = false)
     private String status;
 
-    @Column(name = "id_user", nullable = false)
+    @Column(name = "id_user")
     private Long userId;
 
-    @Column(name = "created_at", nullable = false)
-    private LocalDateTime createdAt = LocalDateTime.now();
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
 
-    @Column(name = "updated_at", nullable = false)
-    private LocalDateTime updatedAt = LocalDateTime.now();
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
 
     @OneToMany(mappedBy = "journalEntry", cascade = CascadeType.ALL)
     private List<JournalEntryLine> lines;
 
+    @Column
+    private Boolean posted = false; 
+
+    // Getters and setters
     public Long getId() {
         return id;
     }
@@ -103,5 +104,13 @@ public class JournalEntry {
 
     public void setLines(List<JournalEntryLine> lines) {
         this.lines = lines;
+    }
+
+    public Boolean isPosted() {
+        return posted;
+    }
+
+    public void setPosted(Boolean posted) {
+        this.posted = posted;
     }
 }

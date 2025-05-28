@@ -12,8 +12,17 @@ public class JournalEntryDto {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private List<JournalEntryLineDto> lines;
+    private Boolean posted;
 
     // Getters and setters
+    public Boolean isPosted() {
+        return posted;
+    }
+
+    public void setPosted(Boolean posted) {
+        this.posted = posted;
+    }
+
     public Long getId() {
         return id;
     }

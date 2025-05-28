@@ -95,3 +95,32 @@ CREATE TABLE journal_entry_lines (
     CONSTRAINT fk_account FOREIGN KEY (id_account) REFERENCES accounts(id),
     CONSTRAINT chk_debit_credit CHECK (debit >= 0 AND credit >= 0 AND (debit > 0 OR credit > 0))
 );
+
+/* 28-05-2025 */
+
+-- Accounting Periods
+CREATE TABLE accounting_periods (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    prefix VARCHAR(5) DEFAULT 'ACPRD',
+    start_date DATE NOT NULL,
+    end_date DATE NOT NULL,
+    is_locked BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT check_dates CHECK (end_date >= start_date)
+);
+
+-- Update existing records to set posted to FALSE where it is NULL
+UPDATE journal_entries
+SET posted = FALSE
+WHERE posted IS NULL;
+
+
+-- Update JournalEntry to add posted flag
+ALTER TABLE journal_entries
+ADD COLUMN posted BOOLEAN DEFAULT FALSE;
+
+ALTER TABLE journal_entries
+ALTER COLUMN posted SET DEFAULT FALSE,
+ALTER COLUMN posted SET NOT NULL;
+

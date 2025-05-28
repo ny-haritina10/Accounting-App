@@ -5,6 +5,7 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -14,8 +15,10 @@ import jakarta.persistence.TypedQuery;
 import mg.module.accounting.api.ApiResponse;
 import mg.module.accounting.dto.JournalEntryDto;
 import mg.module.accounting.dto.JournalEntryLineDto;
+import mg.module.accounting.models.AccountingPeriod;
 import mg.module.accounting.models.JournalEntry;
 import mg.module.accounting.models.JournalEntryLine;
+import mg.module.accounting.services.account.AccountingPeriodService;
 
 @Service
 public class JournalEntryService {
@@ -23,8 +26,17 @@ public class JournalEntryService {
     @PersistenceContext
     private EntityManager entityManager;
 
+    @Autowired
+    private AccountingPeriodService accountingPeriodService;
+
     @Transactional
     public ApiResponse<JournalEntryDto> createJournalEntry(JournalEntryDto dto) {
+        // check if period is locked
+        AccountingPeriod period = accountingPeriodService.findPeriodForDate(LocalDate.now());
+        if (period != null && period.isLocked()) {
+            return ApiResponse.error("Cannot create entry in a locked period", "PERIOD_LOCKED");
+        }
+
         // validate status
         if (!isValidStatus(dto.getStatus())) {
             return ApiResponse.error("Invalid status", "INVALID_STATUS");
@@ -60,6 +72,9 @@ public class JournalEntryService {
         entry.setDescription(dto.getDescription());
         entry.setStatus(dto.getStatus());
         entry.setUserId(dto.getUserId());
+        entry.setPosted(false);
+        entry.setCreatedAt(java.time.LocalDateTime.now());
+        entry.setUpdatedAt(java.time.LocalDateTime.now());
 
         // create journal entry lines
         List<JournalEntryLine> lines = dto.getLines().stream().map(lineDto -> {
@@ -79,9 +94,43 @@ public class JournalEntryService {
         return ApiResponse.success(responseDto, "Journal entry created successfully");
     }
 
+    @Transactional
+    public ApiResponse<JournalEntryDto> postJournalEntry(Long id) {
+        JournalEntry entry = entityManager.find(JournalEntry.class, id);
+        if (entry == null) {
+            return ApiResponse.error("Journal entry not found", "ENTRY_NOT_FOUND");
+        }
+        // Handle null posted value for existing entries
+        if (entry.isPosted() == null) {
+            entry.setPosted(false);
+        }
+        if (entry.isPosted()) {
+            return ApiResponse.error("Journal entry already posted", "ALREADY_POSTED");
+        }
+        if (!"VALIDATED".equals(entry.getStatus())) {
+            return ApiResponse.error("Only validated entries can be posted", "INVALID_STATUS");
+        }
+
+        // check if period is locked
+        AccountingPeriod period = accountingPeriodService.findPeriodForDate(entry.getCreatedAt().toLocalDate());
+        if (period != null && period.isLocked()) {
+            return ApiResponse.error("Cannot post entry in a locked period", "PERIOD_LOCKED");
+        }
+
+        entry.setPosted(true);
+        entry.setUpdatedAt(java.time.LocalDateTime.now());
+        entityManager.merge(entry);
+
+        JournalEntryDto responseDto = mapToDto(entry);
+        return ApiResponse.success(responseDto, "Journal entry posted successfully");
+    }
+
     @Transactional(readOnly = true)
-    public ApiResponse<List<JournalEntryDto>> getAllJournalEntries() {
-        List<JournalEntry> entries = entityManager.createQuery("SELECT je FROM JournalEntry je", JournalEntry.class)
+    public ApiResponse<List<JournalEntryDto>> getAllJournalEntries(boolean postedOnly) {
+        String query = postedOnly
+                ? "SELECT je FROM JournalEntry je WHERE je.posted = true"
+                : "SELECT je FROM JournalEntry je";
+        List<JournalEntry> entries = entityManager.createQuery(query, JournalEntry.class)
                 .getResultList();
         List<JournalEntryDto> dtos = entries.stream().map(this::mapToDto).collect(Collectors.toList());
         return ApiResponse.success(dtos, "Journal entries retrieved successfully");
@@ -93,13 +142,20 @@ public class JournalEntryService {
         if (entry == null) {
             return ApiResponse.error("Journal entry not found", "ENTRY_NOT_FOUND");
         }
+        // Handle null posted value for existing entries
+        if (entry.isPosted() == null) {
+            entry.setPosted(false);
+        }
         JournalEntryDto dto = mapToDto(entry);
         return ApiResponse.success(dto, "Journal entry retrieved successfully");
     }
 
     @Transactional(readOnly = true)
-    public ApiResponse<List<JournalEntryDto>> searchJournalEntries(LocalDate startDate, LocalDate endDate, String status, Long userId, Long accountId) {
+    public ApiResponse<List<JournalEntryDto>> searchJournalEntries(LocalDate startDate, LocalDate endDate, String status, Long userId, Long accountId, boolean postedOnly) {
         StringBuilder query = new StringBuilder("SELECT DISTINCT je FROM JournalEntry je LEFT JOIN je.lines jl WHERE 1=1");
+        if (postedOnly) {
+            query.append(" AND je.posted = true");
+        }
         if (startDate != null) {
             query.append(" AND je.createdAt >= :startDate");
         }
@@ -150,6 +206,7 @@ public class JournalEntryService {
         dto.setUserId(entry.getUserId());
         dto.setCreatedAt(entry.getCreatedAt());
         dto.setUpdatedAt(entry.getUpdatedAt());
+        dto.setPosted(entry.isPosted() != null ? entry.isPosted() : false); 
         dto.setLines(entry.getLines().stream().map(this::mapToLineDto).collect(Collectors.toList()));
         return dto;
     }
