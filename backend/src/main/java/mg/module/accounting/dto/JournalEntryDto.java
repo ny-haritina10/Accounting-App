@@ -13,6 +13,8 @@ public class JournalEntryDto {
     private LocalDateTime updatedAt;
     private List<JournalEntryLineDto> lines;
     private Boolean posted;
+    private Long originalEntryId;
+
 
     // Getters and setters
     public Boolean isPosted() {
@@ -77,5 +79,17 @@ public class JournalEntryDto {
 
     public void setLines(List<JournalEntryLineDto> lines) {
         this.lines = lines;
+    }
+
+    public Boolean getPosted() {
+        return posted;
+    }
+
+    public Long getOriginalEntryId() {
+        return originalEntryId;
+    }
+
+    public void setOriginalEntryId(Long originalEntryId) {
+        this.originalEntryId = originalEntryId;
     }
 }

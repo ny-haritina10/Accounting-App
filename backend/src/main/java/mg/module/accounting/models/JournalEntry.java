@@ -9,6 +9,8 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
@@ -37,6 +39,10 @@ public class JournalEntry {
 
     @OneToMany(mappedBy = "journalEntry", cascade = CascadeType.ALL)
     private List<JournalEntryLine> lines;
+
+    @ManyToOne
+    @JoinColumn(name = "id_original_entry")
+    private JournalEntry originalEntry;
 
     @Column
     private Boolean posted = false; 
@@ -112,5 +118,13 @@ public class JournalEntry {
 
     public void setPosted(Boolean posted) {
         this.posted = posted;
+    }
+
+    public JournalEntry getOriginalEntry() {
+        return originalEntry;
+    }
+
+    public void setOriginalEntry(JournalEntry originalEntry) {
+        this.originalEntry = originalEntry;
     }
 }

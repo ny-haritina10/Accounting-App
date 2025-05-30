@@ -124,3 +124,6 @@ ALTER TABLE journal_entries
 ALTER COLUMN posted SET DEFAULT FALSE,
 ALTER COLUMN posted SET NOT NULL;
 
+ALTER TABLE journal_entries
+ADD COLUMN id_original_entry BIGINT,
+ADD CONSTRAINT fk_original_entry FOREIGN KEY (id_original_entry) REFERENCES journal_entries(id);

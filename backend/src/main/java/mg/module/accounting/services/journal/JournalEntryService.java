@@ -125,6 +125,115 @@ public class JournalEntryService {
         return ApiResponse.success(responseDto, "Journal entry posted successfully");
     }
 
+    @Transactional
+    public ApiResponse<JournalEntryDto> validateJournalEntry(Long id) {
+        JournalEntry entry = entityManager.find(JournalEntry.class, id);
+        if (entry == null) {
+            return ApiResponse.error("Journal entry not found", "ENTRY_NOT_FOUND");
+        }
+        if (entry.isPosted() == null) {
+            entry.setPosted(false);
+        }
+        if (entry.isPosted()) {
+            return ApiResponse.error("Cannot validate a posted entry", "ALREADY_POSTED");
+        }
+        if (!"CREATED".equals(entry.getStatus())) {
+            return ApiResponse.error("Only created entries can be validated", "INVALID_STATUS");
+        }
+
+        // check if period is locked
+        AccountingPeriod period = accountingPeriodService.findPeriodForDate(entry.getCreatedAt().toLocalDate());
+        if (period != null && period.isLocked()) {
+            return ApiResponse.error("Cannot validate entry in a locked period", "PERIOD_LOCKED");
+        }
+
+        entry.setStatus("VALIDATED");
+        entry.setUpdatedAt(java.time.LocalDateTime.now());
+        entityManager.merge(entry);
+
+        JournalEntryDto responseDto = mapToDto(entry);
+        return ApiResponse.success(responseDto, "Journal entry validated successfully");
+    }
+
+    @Transactional
+    public ApiResponse<JournalEntryDto> cancelJournalEntry(Long id) {
+        JournalEntry entry = entityManager.find(JournalEntry.class, id);
+        if (entry == null) {
+            return ApiResponse.error("Journal entry not found", "ENTRY_NOT_FOUND");
+        }
+        if (entry.isPosted() == null) {
+            entry.setPosted(false);
+        }
+        if (entry.isPosted()) {
+            return ApiResponse.error("Cannot cancel a posted entry", "ALREADY_POSTED");
+        }
+        if ("CANCELED".equals(entry.getStatus()) || "REVERSED".equals(entry.getStatus())) {
+            return ApiResponse.error("Entry is already canceled or reversed", "INVALID_STATUS");
+        }
+
+        // check if period is locked
+        AccountingPeriod period = accountingPeriodService.findPeriodForDate(entry.getCreatedAt().toLocalDate());
+        if (period != null && period.isLocked()) {
+            return ApiResponse.error("Cannot cancel entry in a locked period", "PERIOD_LOCKED");
+        }
+
+        entry.setStatus("CANCELED");
+        entry.setUpdatedAt(java.time.LocalDateTime.now());
+        entityManager.merge(entry);
+
+        JournalEntryDto responseDto = mapToDto(entry);
+        return ApiResponse.success(responseDto, "Journal entry canceled successfully");
+    }
+
+    @Transactional
+    public ApiResponse<JournalEntryDto> reverseJournalEntry(Long id) {
+        JournalEntry originalEntry = entityManager.find(JournalEntry.class, id);
+        if (originalEntry == null) {
+            return ApiResponse.error("Journal entry not found", "ENTRY_NOT_FOUND");
+        }
+        if (originalEntry.isPosted() == null) {
+            originalEntry.setPosted(false);
+        }
+        if (!originalEntry.isPosted()) {
+            return ApiResponse.error("Only posted entries can be reversed", "NOT_POSTED");
+        }
+        if ("CANCELED".equals(originalEntry.getStatus()) || "REVERSED".equals(originalEntry.getStatus())) {
+            return ApiResponse.error("Cannot reverse a canceled or reversed entry", "INVALID_STATUS");
+        }
+
+        // check if period is locked
+        AccountingPeriod period = accountingPeriodService.findPeriodForDate(LocalDate.now());
+        if (period != null && period.isLocked()) {
+            return ApiResponse.error("Cannot create reversal entry in a locked period", "PERIOD_LOCKED");
+        }
+
+        // create reversal entry
+        JournalEntry reversalEntry = new JournalEntry();
+        reversalEntry.setDescription("Reversal of entry #" + originalEntry.getId());
+        reversalEntry.setStatus("REVERSED");
+        reversalEntry.setUserId(originalEntry.getUserId());
+        reversalEntry.setPosted(false);
+        reversalEntry.setCreatedAt(java.time.LocalDateTime.now());
+        reversalEntry.setUpdatedAt(java.time.LocalDateTime.now());
+        reversalEntry.setOriginalEntry(originalEntry);
+
+        // create reversed lines (swap debit and credit)
+        List<JournalEntryLine> reversalLines = originalEntry.getLines().stream().map(line -> {
+            JournalEntryLine reversalLine = new JournalEntryLine();
+            reversalLine.setJournalEntry(reversalEntry);
+            reversalLine.setAccountId(line.getAccountId());
+            reversalLine.setDebit(line.getCredit() != null ? line.getCredit() : BigDecimal.ZERO);
+            reversalLine.setCredit(line.getDebit() != null ? line.getDebit() : BigDecimal.ZERO);
+            return reversalLine;
+        }).collect(Collectors.toList());
+
+        reversalEntry.setLines(reversalLines);
+        entityManager.persist(reversalEntry);
+
+        JournalEntryDto responseDto = mapToDto(reversalEntry);
+        return ApiResponse.success(responseDto, "Journal entry reversed successfully");
+    }
+
     @Transactional(readOnly = true)
     public ApiResponse<List<JournalEntryDto>> getAllJournalEntries(boolean postedOnly) {
         String query = postedOnly

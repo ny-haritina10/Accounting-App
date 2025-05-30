@@ -37,6 +37,24 @@ public class JournalEntryController {
         return ResponseEntity.ok(response);
     }
 
+    @PostMapping("/{id}/validate")
+    public ResponseEntity<ApiResponse<JournalEntryDto>> validateJournalEntry(@PathVariable Long id) {
+        ApiResponse<JournalEntryDto> response = journalEntryService.validateJournalEntry(id);
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/{id}/cancel")
+    public ResponseEntity<ApiResponse<JournalEntryDto>> cancelJournalEntry(@PathVariable Long id) {
+        ApiResponse<JournalEntryDto> response = journalEntryService.cancelJournalEntry(id);
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/{id}/reverse")
+    public ResponseEntity<ApiResponse<JournalEntryDto>> reverseJournalEntry(@PathVariable Long id) {
+        ApiResponse<JournalEntryDto> response = journalEntryService.reverseJournalEntry(id);
+        return ResponseEntity.ok(response);
+    }
+
     @GetMapping
     public ResponseEntity<ApiResponse<List<JournalEntryDto>>> getAllJournalEntries(
             @RequestParam(defaultValue = "false") boolean postedOnly) {
