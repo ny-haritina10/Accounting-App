@@ -35,7 +35,6 @@ public class JournalEntryService {
     public ApiResponse<JournalEntryDto> createJournalEntry(JournalEntryDto dto) {
         // check if period is locked
         AccountingPeriod period = accountingPeriodService.findPeriodForDate(LocalDate.now());
-        if (period != null && period.isLocked()) {
         if (period == null) {
             return ApiResponse.error("No accounting period found for current date", "NO_PERIOD_FOUND");
         }
