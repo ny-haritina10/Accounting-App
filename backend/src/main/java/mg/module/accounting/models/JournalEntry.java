@@ -47,6 +47,9 @@ public class JournalEntry {
     @Column
     private Boolean posted = false; 
 
+    @Column(name = "entry_number", length = 20, unique = true)
+    private String entryNumber;
+
     // Getters and setters
     public Long getId() {
         return id;
@@ -126,5 +129,17 @@ public class JournalEntry {
 
     public void setOriginalEntry(JournalEntry originalEntry) {
         this.originalEntry = originalEntry;
+    }
+
+    public Boolean getPosted() {
+        return posted;
+    }
+
+    public String getEntryNumber() {
+        return entryNumber;
+    }
+
+    public void setEntryNumber(String entryNumber) {
+        this.entryNumber = entryNumber;
     }
 }

@@ -2,6 +2,7 @@ package mg.module.accounting.services.journal;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -18,6 +19,7 @@ import mg.module.accounting.dto.JournalEntryLineDto;
 import mg.module.accounting.models.AccountingPeriod;
 import mg.module.accounting.models.JournalEntry;
 import mg.module.accounting.models.JournalEntryLine;
+import mg.module.accounting.models.JournalEntrySequence;
 import mg.module.accounting.services.account.AccountingPeriodService;
 
 @Service
@@ -34,6 +36,10 @@ public class JournalEntryService {
         // check if period is locked
         AccountingPeriod period = accountingPeriodService.findPeriodForDate(LocalDate.now());
         if (period != null && period.isLocked()) {
+        if (period == null) {
+            return ApiResponse.error("No accounting period found for current date", "NO_PERIOD_FOUND");
+        }
+        if (period.isLocked()) {
             return ApiResponse.error("Cannot create entry in a locked period", "PERIOD_LOCKED");
         }
 
@@ -67,6 +73,9 @@ public class JournalEntryService {
             return ApiResponse.error("Debit and credit amounts must be equal", "UNBALANCED_ENTRY");
         }
 
+        // generate entry number
+        String entryNumber = generateEntryNumber(period);
+
         // create journal entry
         JournalEntry entry = new JournalEntry();
         entry.setDescription(dto.getDescription());
@@ -75,6 +84,7 @@ public class JournalEntryService {
         entry.setPosted(false);
         entry.setCreatedAt(java.time.LocalDateTime.now());
         entry.setUpdatedAt(java.time.LocalDateTime.now());
+        entry.setEntryNumber(entryNumber);
 
         // create journal entry lines
         List<JournalEntryLine> lines = dto.getLines().stream().map(lineDto -> {
@@ -89,7 +99,6 @@ public class JournalEntryService {
         entry.setLines(lines);
         entityManager.persist(entry);
 
-        // convert to DTO
         JournalEntryDto responseDto = mapToDto(entry);
         return ApiResponse.success(responseDto, "Journal entry created successfully");
     }
@@ -203,19 +212,26 @@ public class JournalEntryService {
 
         // check if period is locked
         AccountingPeriod period = accountingPeriodService.findPeriodForDate(LocalDate.now());
-        if (period != null && period.isLocked()) {
+        if (period == null) {
+            return ApiResponse.error("No accounting period found for current date", "NO_PERIOD_FOUND");
+        }
+        if (period.isLocked()) {
             return ApiResponse.error("Cannot create reversal entry in a locked period", "PERIOD_LOCKED");
         }
 
+        // generate entry number for reversal
+        String entryNumber = generateEntryNumber(period);
+
         // create reversal entry
         JournalEntry reversalEntry = new JournalEntry();
-        reversalEntry.setDescription("Reversal of entry #" + originalEntry.getId());
+        reversalEntry.setDescription("Reversal of entry #" + originalEntry.getEntryNumber());
         reversalEntry.setStatus("REVERSED");
         reversalEntry.setUserId(originalEntry.getUserId());
         reversalEntry.setPosted(false);
         reversalEntry.setCreatedAt(java.time.LocalDateTime.now());
         reversalEntry.setUpdatedAt(java.time.LocalDateTime.now());
         reversalEntry.setOriginalEntry(originalEntry);
+        reversalEntry.setEntryNumber(entryNumber);
 
         // create reversed lines (swap debit and credit)
         List<JournalEntryLine> reversalLines = originalEntry.getLines().stream().map(line -> {
@@ -315,7 +331,9 @@ public class JournalEntryService {
         dto.setUserId(entry.getUserId());
         dto.setCreatedAt(entry.getCreatedAt());
         dto.setUpdatedAt(entry.getUpdatedAt());
-        dto.setPosted(entry.isPosted() != null ? entry.isPosted() : false); 
+        dto.setPosted(entry.isPosted() != null ? entry.isPosted() : false);
+        dto.setOriginalEntryId(entry.getOriginalEntry() != null ? entry.getOriginalEntry().getId() : null);
+        dto.setEntryNumber(entry.getEntryNumber());
         dto.setLines(entry.getLines().stream().map(this::mapToLineDto).collect(Collectors.toList()));
         return dto;
     }
@@ -328,5 +346,34 @@ public class JournalEntryService {
         lineDto.setDebit(line.getDebit());
         lineDto.setCredit(line.getCredit());
         return lineDto;
+    }
+
+    private String generateEntryNumber(AccountingPeriod period) {
+        // find or create sequence for the period
+        JournalEntrySequence sequence = entityManager.createQuery(
+                "SELECT s FROM JournalEntrySequence s WHERE s.period.id = :periodId",
+                JournalEntrySequence.class)
+                .setParameter("periodId", period.getId())
+                .getResultList()
+                .stream()
+                .findFirst()
+                .orElse(null);
+
+        if (sequence == null) {
+            sequence = new JournalEntrySequence();
+            sequence.setPeriod(period);
+            sequence.setNextSequence(1);
+            entityManager.persist(sequence);
+        }
+
+        int currentSequence = sequence.getNextSequence();
+        sequence.setNextSequence(currentSequence + 1);
+        sequence.setUpdatedAt(java.time.LocalDateTime.now());
+        entityManager.merge(sequence);
+
+        // format entry number: YYYY-MM-NNNN
+        String yearMonth = period.getStartDate().format(DateTimeFormatter.ofPattern("yyyy-MM"));
+        String sequenceNumber = String.format("%04d", currentSequence);
+        return yearMonth + "-" + sequenceNumber;
     }
 }

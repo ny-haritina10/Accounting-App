@@ -14,6 +14,7 @@ public class JournalEntryDto {
     private List<JournalEntryLineDto> lines;
     private Boolean posted;
     private Long originalEntryId;
+    private String entryNumber;
 
 
     // Getters and setters
@@ -91,5 +92,13 @@ public class JournalEntryDto {
 
     public void setOriginalEntryId(Long originalEntryId) {
         this.originalEntryId = originalEntryId;
+    }
+
+    public String getEntryNumber() {
+        return entryNumber;
+    }
+
+    public void setEntryNumber(String entryNumber) {
+        this.entryNumber = entryNumber;
     }
 }

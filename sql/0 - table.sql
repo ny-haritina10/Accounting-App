@@ -127,3 +127,18 @@ ALTER COLUMN posted SET NOT NULL;
 ALTER TABLE journal_entries
 ADD COLUMN id_original_entry BIGINT,
 ADD CONSTRAINT fk_original_entry FOREIGN KEY (id_original_entry) REFERENCES journal_entries(id);
+
+-- Journal Entry Sequence
+CREATE TABLE journal_entry_sequences (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    prefix VARCHAR(5) DEFAULT 'JES',
+    id_period BIGINT NOT NULL,
+    next_sequence INT NOT NULL DEFAULT 1,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_period FOREIGN KEY (id_period) REFERENCES accounting_periods(id)
+);
+
+-- Add entry_number column to journal_entries
+ALTER TABLE journal_entries
+ADD COLUMN entry_number VARCHAR(20) UNIQUE;
