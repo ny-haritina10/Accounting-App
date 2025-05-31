@@ -16,11 +16,11 @@ import io.jsonwebtoken.security.Keys;
 public class JwtUtil {
     
     private static final Key SECRET_KEY = Keys.secretKeyFor(SignatureAlgorithm.HS512);
-    private static final long EXPIRATION_TIME = 5 * 60 * 1000; // 5 minutes in milliseconds
+    private static final long EXPIRATION_TIME = 60 * 60 * 1000; // 1 hour in milliseconds
 
     public String generateToken(String userName) {
         String jti = UUID.randomUUID().toString();
-        LocalDateTime expiryDate = LocalDateTime.now().plusMinutes(5);
+        LocalDateTime expiryDate = LocalDateTime.now().plusSeconds(EXPIRATION_TIME / 1000); // convert milliseconds to seconds
         return Jwts.builder()
                 .setSubject(userName)
                 .setId(jti) // unique token identifier

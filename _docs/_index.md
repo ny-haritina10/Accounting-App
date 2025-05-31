@@ -101,6 +101,70 @@ Implement GET endpoints to:
 - [ ] Filter by date, account type, etc.  
 - [ ] Link entries to original journal entries
 
+🔧 Core Functionalities (General Ledger Module)
+
+1. View General Ledger
+    ✅ Display all ledger entries per account
+    ✅ Show running balances (debit/credit, net)
+    ✅ Group by account (e.g., cash, receivables, etc.)
+    ✅ Paginated 
+
+2. Filter & Search
+    ✅ Filter by:
+        Date range
+        Account type (Asset, Liability, Equity, Income, Expense)
+        Account name or number
+        Journal type (Sales, Purchase, Cash, etc.)
+    ✅ Text search (narration, reference numbers)
+
+3. Ledger Entry Details
+    ✅ Clickable row to view:
+        Original journal entry
+        Linked documents (invoice, payment, etc.)
+        Narration / Description
+        Debit / Credit amounts
+        Reference ID / Transaction ID
+
+4. Link to Journal Entries
+    ✅ Navigate to full journal entry details
+    ✅ Show source transaction (invoice, bill, etc.)
+    ✅ Display related accounts involved in the journal
+
+5. Account Balances Summary
+    ✅ Opening balance
+    ✅ Period movements (debit and credit totals)
+    ✅ Closing balance
+    ✅ Trial balance-compatible view
+
+6. Export & Reports
+    ✅ Export ledger to:
+        PDF
+        Excel
+        CSV
+    ✅ Generate printable reports for:
+        Specific accounts
+        Specific date ranges
+
+7. Audit & Security
+    ✅ View who added/edited an entry
+    ✅ Role-based access (e.g., read-only for auditors)
+    ✅ Entry locking after period closure
+
+8. Period Closing and Archiving
+    ✅ Lock periods to prevent post-close modifications
+    ✅ Archiving old data
+    ✅ Reconcile balances with trial balance / balance sheet
+
+9. Multi-Currency Support (Optional)
+    ✅ Record entries in base + foreign currency
+    ✅ Auto-calculate exchange differences
+    ✅ Show gains/losses in ledgers
+
+10. Reconciliation Support
+    ✅ Mark entries as reconciled/unreconciled
+    ✅ Bank and account reconciliation tools
+    ✅ Generate discrepancy reports
+
 ---
 
 ## 📊 Financial Reports
