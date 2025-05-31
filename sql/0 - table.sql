@@ -142,3 +142,15 @@ CREATE TABLE journal_entry_sequences (
 -- Add entry_number column to journal_entries
 ALTER TABLE journal_entries
 ADD COLUMN entry_number VARCHAR(20) UNIQUE;
+
+-- Journal Entry Audit
+CREATE TABLE journal_entry_audits (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    prefix VARCHAR(5) DEFAULT 'JEA',
+    id_journal_entry BIGINT NOT NULL,
+    action VARCHAR(50) NOT NULL,
+    id_user BIGINT NOT NULL,
+    details TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_journal_entry FOREIGN KEY (id_journal_entry) REFERENCES journal_entries(id)
+);

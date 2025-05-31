@@ -14,10 +14,12 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.TypedQuery;
 import mg.module.accounting.api.ApiResponse;
+import mg.module.accounting.dto.JournalEntryAuditDto;
 import mg.module.accounting.dto.JournalEntryDto;
 import mg.module.accounting.dto.JournalEntryLineDto;
 import mg.module.accounting.models.AccountingPeriod;
 import mg.module.accounting.models.JournalEntry;
+import mg.module.accounting.models.JournalEntryAudit;
 import mg.module.accounting.models.JournalEntryLine;
 import mg.module.accounting.models.JournalEntrySequence;
 import mg.module.accounting.services.account.AccountingPeriodService;
@@ -98,6 +100,10 @@ public class JournalEntryService {
         entry.setLines(lines);
         entityManager.persist(entry);
 
+        // log audit
+        logAudit(entry.getId(), "CREATED", dto.getUserId(), "Created journal entry: " + entryNumber);
+
+        // convert to DTO
         JournalEntryDto responseDto = mapToDto(entry);
         return ApiResponse.success(responseDto, "Journal entry created successfully");
     }
@@ -108,7 +114,6 @@ public class JournalEntryService {
         if (entry == null) {
             return ApiResponse.error("Journal entry not found", "ENTRY_NOT_FOUND");
         }
-        // Handle null posted value for existing entries
         if (entry.isPosted() == null) {
             entry.setPosted(false);
         }
@@ -128,6 +133,9 @@ public class JournalEntryService {
         entry.setPosted(true);
         entry.setUpdatedAt(java.time.LocalDateTime.now());
         entityManager.merge(entry);
+
+        // log audit
+        logAudit(entry.getId(), "POSTED", entry.getUserId(), "Posted journal entry: " + entry.getEntryNumber());
 
         JournalEntryDto responseDto = mapToDto(entry);
         return ApiResponse.success(responseDto, "Journal entry posted successfully");
@@ -159,6 +167,9 @@ public class JournalEntryService {
         entry.setUpdatedAt(java.time.LocalDateTime.now());
         entityManager.merge(entry);
 
+        // log audit
+        logAudit(entry.getId(), "VALIDATED", entry.getUserId(), "Validated journal entry: " + entry.getEntryNumber());
+
         JournalEntryDto responseDto = mapToDto(entry);
         return ApiResponse.success(responseDto, "Journal entry validated successfully");
     }
@@ -188,6 +199,9 @@ public class JournalEntryService {
         entry.setStatus("CANCELED");
         entry.setUpdatedAt(java.time.LocalDateTime.now());
         entityManager.merge(entry);
+
+        // log audit
+        logAudit(entry.getId(), "CANCELED", entry.getUserId(), "Canceled journal entry: " + entry.getEntryNumber());
 
         JournalEntryDto responseDto = mapToDto(entry);
         return ApiResponse.success(responseDto, "Journal entry canceled successfully");
@@ -245,6 +259,10 @@ public class JournalEntryService {
         reversalEntry.setLines(reversalLines);
         entityManager.persist(reversalEntry);
 
+        // log audit
+        logAudit(reversalEntry.getId(), "REVERSED", originalEntry.getUserId(), 
+                "Reversed journal entry: " + originalEntry.getEntryNumber() + " to new entry: " + entryNumber);
+
         JournalEntryDto responseDto = mapToDto(reversalEntry);
         return ApiResponse.success(responseDto, "Journal entry reversed successfully");
     }
@@ -266,7 +284,6 @@ public class JournalEntryService {
         if (entry == null) {
             return ApiResponse.error("Journal entry not found", "ENTRY_NOT_FOUND");
         }
-        // Handle null posted value for existing entries
         if (entry.isPosted() == null) {
             entry.setPosted(false);
         }
@@ -318,33 +335,35 @@ public class JournalEntryService {
         return ApiResponse.success(dtos, "Journal entries retrieved successfully");
     }
 
+    @Transactional(readOnly = true)
+    public ApiResponse<List<JournalEntryAuditDto>> getJournalEntryAuditTrail(Long journalEntryId) {
+        JournalEntry entry = entityManager.find(JournalEntry.class, journalEntryId);
+        if (entry == null) {
+            return ApiResponse.error("Journal entry not found", "ENTRY_NOT_FOUND");
+        }
+
+        List<JournalEntryAudit> audits = entityManager.createQuery(
+                "SELECT a FROM JournalEntryAudit a WHERE a.journalEntryId = :journalEntryId ORDER BY a.createdAt",
+                JournalEntryAudit.class)
+                .setParameter("journalEntryId", journalEntryId)
+                .getResultList();
+
+        List<JournalEntryAuditDto> auditDtos = audits.stream().map(this::mapToAuditDto).collect(Collectors.toList());
+        return ApiResponse.success(auditDtos, "Audit trail retrieved successfully");
+    }
+
+    private void logAudit(Long journalEntryId, String action, Long userId, String details) {
+        JournalEntryAudit audit = new JournalEntryAudit();
+        audit.setJournalEntryId(journalEntryId);
+        audit.setAction(action);
+        audit.setUserId(userId);
+        audit.setDetails(details);
+        audit.setCreatedAt(java.time.LocalDateTime.now());
+        entityManager.persist(audit);
+    }
+
     private boolean isValidStatus(String status) {
         return status != null && List.of("CREATED", "VALIDATED", "CANCELED", "REVERSED").contains(status);
-    }
-
-    private JournalEntryDto mapToDto(JournalEntry entry) {
-        JournalEntryDto dto = new JournalEntryDto();
-        dto.setId(entry.getId());
-        dto.setDescription(entry.getDescription());
-        dto.setStatus(entry.getStatus());
-        dto.setUserId(entry.getUserId());
-        dto.setCreatedAt(entry.getCreatedAt());
-        dto.setUpdatedAt(entry.getUpdatedAt());
-        dto.setPosted(entry.isPosted() != null ? entry.isPosted() : false);
-        dto.setOriginalEntryId(entry.getOriginalEntry() != null ? entry.getOriginalEntry().getId() : null);
-        dto.setEntryNumber(entry.getEntryNumber());
-        dto.setLines(entry.getLines().stream().map(this::mapToLineDto).collect(Collectors.toList()));
-        return dto;
-    }
-
-    private JournalEntryLineDto mapToLineDto(JournalEntryLine line) {
-        JournalEntryLineDto lineDto = new JournalEntryLineDto();
-        lineDto.setId(line.getId());
-        lineDto.setPrefix(line.getPrefix());
-        lineDto.setAccountId(line.getAccountId());
-        lineDto.setDebit(line.getDebit());
-        lineDto.setCredit(line.getCredit());
-        return lineDto;
     }
 
     private String generateEntryNumber(AccountingPeriod period) {
@@ -374,5 +393,42 @@ public class JournalEntryService {
         String yearMonth = period.getStartDate().format(DateTimeFormatter.ofPattern("yyyy-MM"));
         String sequenceNumber = String.format("%04d", currentSequence);
         return yearMonth + "-" + sequenceNumber;
+    }
+
+    private JournalEntryDto mapToDto(JournalEntry entry) {
+        JournalEntryDto dto = new JournalEntryDto();
+        dto.setId(entry.getId());
+        dto.setDescription(entry.getDescription());
+        dto.setStatus(entry.getStatus());
+        dto.setUserId(entry.getUserId());
+        dto.setCreatedAt(entry.getCreatedAt());
+        dto.setUpdatedAt(entry.getUpdatedAt());
+        dto.setPosted(entry.isPosted() != null ? entry.isPosted() : false);
+        dto.setOriginalEntryId(entry.getOriginalEntry() != null ? entry.getOriginalEntry().getId() : null);
+        dto.setEntryNumber(entry.getEntryNumber());
+        dto.setLines(entry.getLines().stream().map(this::mapToLineDto).collect(Collectors.toList()));
+        return dto;
+    }
+
+    private JournalEntryLineDto mapToLineDto(JournalEntryLine line) {
+        JournalEntryLineDto lineDto = new JournalEntryLineDto();
+        lineDto.setId(line.getId());
+        lineDto.setPrefix(line.getPrefix());
+        lineDto.setAccountId(line.getAccountId());
+        lineDto.setDebit(line.getDebit());
+        lineDto.setCredit(line.getCredit());
+        return lineDto;
+    }
+
+    private JournalEntryAuditDto mapToAuditDto(JournalEntryAudit audit) {
+        JournalEntryAuditDto dto = new JournalEntryAuditDto();
+        dto.setId(audit.getId());
+        dto.setPrefix(audit.getPrefix());
+        dto.setJournalEntryId(audit.getJournalEntryId());
+        dto.setAction(audit.getAction());
+        dto.setUserId(audit.getUserId());
+        dto.setDetails(audit.getDetails());
+        dto.setCreatedAt(audit.getCreatedAt());
+        return dto;
     }
 }

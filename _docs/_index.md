@@ -86,10 +86,10 @@ Implement GET endpoints to:
     Assign unique sequential journal entry numbers, optionally per period (e.g., 2025-0001).
     Suggest a well formatted and coherent unique sequential entry numbers 
 
-5. Audit Trail
+5. Audit Trail [[NEXT]]
     Record:
-        Who created/updated/reversed
-        Timestamps for each action
+      Who created/updated/reversed a Journal Entry
+      Timestamps for each action
   
 ---
 

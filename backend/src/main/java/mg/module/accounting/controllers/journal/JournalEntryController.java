@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import mg.module.accounting.api.ApiResponse;
+import mg.module.accounting.dto.JournalEntryAuditDto;
 import mg.module.accounting.dto.JournalEntryDto;
 import mg.module.accounting.services.journal.JournalEntryService;
 
@@ -65,6 +66,12 @@ public class JournalEntryController {
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<JournalEntryDto>> getJournalEntryById(@PathVariable Long id) {
         ApiResponse<JournalEntryDto> response = journalEntryService.getJournalEntryById(id);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/{id}/audit-trail")
+    public ResponseEntity<ApiResponse<List<JournalEntryAuditDto>>> getJournalEntryAuditTrail(@PathVariable Long id) {
+        ApiResponse<List<JournalEntryAuditDto>> response = journalEntryService.getJournalEntryAuditTrail(id);
         return ResponseEntity.ok(response);
     }
 
