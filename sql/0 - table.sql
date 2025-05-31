@@ -154,3 +154,22 @@ CREATE TABLE journal_entry_audits (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_journal_entry FOREIGN KEY (id_journal_entry) REFERENCES journal_entries(id)
 );
+
+-- ledger entries
+CREATE TABLE ledger_entries (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    prefix VARCHAR(5) DEFAULT 'LEDG',
+    account_name VARCHAR(255) NOT NULL,
+    transaction_date TIMESTAMP WITH TIME ZONE NOT NULL,
+    debit NUMERIC(19,2) NOT NULL,
+    credit NUMERIC(19,2) NOT NULL,
+    balance NUMERIC(19,2) NOT NULL,
+    description TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Add foreign key to link ledger_entries to journal_entry_lines
+ALTER TABLE ledger_entries
+ADD COLUMN id_journal_entry_line BIGINT,
+ADD CONSTRAINT fk_journal_entry_line FOREIGN KEY (id_journal_entry_line) REFERENCES journal_entry_lines(id);

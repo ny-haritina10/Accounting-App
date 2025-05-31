@@ -18,10 +18,14 @@ import mg.module.accounting.dto.JournalEntryAuditDto;
 import mg.module.accounting.dto.JournalEntryDto;
 import mg.module.accounting.dto.JournalEntryLineDto;
 import mg.module.accounting.models.AccountingPeriod;
+import mg.module.accounting.models.ChartOfAccount;
 import mg.module.accounting.models.JournalEntry;
 import mg.module.accounting.models.JournalEntryAudit;
 import mg.module.accounting.models.JournalEntryLine;
 import mg.module.accounting.models.JournalEntrySequence;
+import mg.module.accounting.models.LedgerEntry;
+import mg.module.accounting.repositories.ChartOfAccountRepository;
+import mg.module.accounting.repositories.LedgerEntryRepository;
 import mg.module.accounting.services.account.AccountingPeriodService;
 
 @Service
@@ -32,6 +36,12 @@ public class JournalEntryService {
 
     @Autowired
     private AccountingPeriodService accountingPeriodService;
+
+    @Autowired
+    private ChartOfAccountRepository chartOfAccountRepository;
+
+    @Autowired
+    private LedgerEntryRepository ledgerEntryRepository;
 
     @Transactional
     public ApiResponse<JournalEntryDto> createJournalEntry(JournalEntryDto dto) {
@@ -130,11 +140,41 @@ public class JournalEntryService {
             return ApiResponse.error("Cannot post entry in a locked period", "PERIOD_LOCKED");
         }
 
+        // calculate running balance for each account
+        for (JournalEntryLine line : entry.getLines()) {
+            ChartOfAccount account = chartOfAccountRepository.findByAccountCode(line.getAccountId().toString())
+                    .orElseThrow(() -> new RuntimeException("Account not found: " + line.getAccountId()));
+
+            // get current balance for the account
+            BigDecimal currentBalance = ledgerEntryRepository.findTopByAccountNameOrderByTransactionDateDesc(account.getAccountName())
+                    .map(LedgerEntry::getBalance)
+                    .orElse(BigDecimal.ZERO);
+
+            // calculate new balance
+            BigDecimal debit = line.getDebit() != null ? line.getDebit() : BigDecimal.ZERO;
+            BigDecimal credit = line.getCredit() != null ? line.getCredit() : BigDecimal.ZERO;
+            BigDecimal newBalance = currentBalance.add(debit).subtract(credit);
+
+            // create ledger entry
+            LedgerEntry ledgerEntry = new LedgerEntry();
+            ledgerEntry.setPrefix("LEDG");
+            ledgerEntry.setAccountName(account.getAccountName());
+            ledgerEntry.setTransactionDate(entry.getCreatedAt());
+            ledgerEntry.setDebit(debit);
+            ledgerEntry.setCredit(credit);
+            ledgerEntry.setBalance(newBalance);
+            ledgerEntry.setDescription(entry.getDescription());
+            ledgerEntry.setJournalEntryLine(line);
+            ledgerEntry.setCreatedAt(entry.getCreatedAt());
+            ledgerEntry.setUpdatedAt(entry.getUpdatedAt());
+
+            ledgerEntryRepository.save(ledgerEntry);
+        }
+
         entry.setPosted(true);
         entry.setUpdatedAt(java.time.LocalDateTime.now());
         entityManager.merge(entry);
 
-        // log audit
         logAudit(entry.getId(), "POSTED", entry.getUserId(), "Posted journal entry: " + entry.getEntryNumber());
 
         JournalEntryDto responseDto = mapToDto(entry);
