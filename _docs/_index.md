@@ -109,7 +109,8 @@ Implement GET endpoints to:
     ✅ Group by account (e.g., cash, receivables, etc.)
     ✅ Paginated 
 
-2. Filter & Search
+**CURRENT**
+2. Filter & Search 
     ✅ Filter by:
         Date range
         Account type (Asset, Liability, Equity, Income, Expense)

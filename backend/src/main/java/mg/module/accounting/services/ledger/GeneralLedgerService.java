@@ -1,5 +1,8 @@
+
 package mg.module.accounting.services.ledger;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -24,6 +27,24 @@ public class GeneralLedgerService {
         Pageable pageable = PageRequest.of(page, size, Sort.by("accountName").and(Sort.by("transactionDate")));
         Page<LedgerEntry> ledgerPage = ledgerEntryRepository.findAll(pageable);
         
+        return ledgerPage.getContent().stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+
+    public List<GeneralLedgerEntryDTO> searchLedgerEntries(
+            String startDate, String endDate, String accountName, String accountNumber,
+            String journalType, String narration, int page, int size) {
+
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        LocalDateTime start = (startDate != null && !startDate.isEmpty()) ? LocalDateTime.parse(startDate, formatter) : null;
+        LocalDateTime end = (endDate != null && !endDate.isEmpty()) ? LocalDateTime.parse(endDate, formatter) : null;
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by("transactionDate").descending());
+
+        Page<LedgerEntry> ledgerPage = ledgerEntryRepository.searchLedgerEntries(
+                start, end, accountName, accountNumber, journalType, narration, pageable);
+
         return ledgerPage.getContent().stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
